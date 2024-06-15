@@ -6,11 +6,11 @@ authors = ["BLooperZ <blooperz@users.noreply.github.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = ">=3.12,<3.13"
 pakal = {git = "https://github.com/adventurebrew/pakal.git"}
-numpy = "^1.24.2"
-pillow = "^9.5.0"
-prompt-toolkit = "^3.0.41"
+numpy = "^1.26.4"
+pillow = "^10.3.0"
+prompt-toolkit = "^3.0.43"
 
 
 [tool.poetry.group.dev.dependencies]

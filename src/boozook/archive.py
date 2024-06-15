@@ -21,16 +21,16 @@ def game_search(base_dir, patterns=('*',), patches=(), archives=ARCHIVE_PATTERNS
         for rp in itertools.chain(patches, ('.',)):
             patch_dir = base_dir / rp
             for pattern in patterns:
-                for entry in sorted(patch_dir.glob(pattern)):
+                for entry in sorted(patch_dir.glob(pattern, case_sensitive=False)):
                     if not (entry.is_dir() or entry.name in parsed_files):
                         parsed_files.add(entry.name)
                         yield pattern, entry
 
     for archive_pattern in archives:
-        for archive_path in sorted(base_dir.glob(archive_pattern)):
+        for archive_path in sorted(base_dir.glob(archive_pattern, case_sensitive=False)):
             with stk.open(archive_path) as archive:
                 for pattern in patterns:
-                    for entry in archive.glob(pattern):
+                    for entry in archive.glob(pattern, case_sensitive=False):
                         if entry.name not in parsed_files:
                             parsed_files.add(entry.name)
                             yield pattern, entry
