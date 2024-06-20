@@ -17,15 +17,14 @@ class Language(IntEnum):
     ALL = 1
     ITA = 2
     ESP = 3
-    USA = 4
-    NDL = 5
+    NDL = 4
+    USA = 5
     KOR = 6
-    ISR = 7
-    POR = 8
+    POR = 7
+    ISR = 8
     JAP = 9
     ANG = 10
-
-
+    
 def compose(
     game: GameBase,
     lines: Iterable[Sequence[str]],
