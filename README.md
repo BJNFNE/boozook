@@ -1,5 +1,5 @@
 # boozook
-Tools for extracting and editing Coktel Vision game resources
+Tools for extracting and editing Coktel Vision game resources.
 
 # Features
 * Decompile game scripts partially (TOT/0OT)
