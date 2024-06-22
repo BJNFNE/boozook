@@ -1149,6 +1149,7 @@ gob6_ops = {
 
 gob7_ops = {
     gob6_ops,
+    0x0C: xparam('o7_setCursorToLoadFromExec'),
     0x44: xparam('o7_displayWarning'),
     0x44: xparam('o7_logString'),
     0x54: fparam('o7_intToString', reads_uint16le, read_expr, read_expr),
