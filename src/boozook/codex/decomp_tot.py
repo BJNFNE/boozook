@@ -1108,7 +1108,7 @@ gob2_ops = {
 
 gob3_ops = {
     **gob2_ops,
-    0x32: fparam('o3_copySprite', reads_uint16le, reads_uint16le, read_expr, read_expr, read_expr, read_expr, read_expr, read_expr, reads_uint16le,),
+    0x32: fparam('o3_copySprite', reads_uint16le, reads_uint16le, read_expr, read_expr, read_expr, read_expr, read_expr, read_expr, reads_uint16le),
 }
 
 
