@@ -1074,6 +1074,21 @@ gob1_ops = {
     0x4F: fparam('o1_manageDataFile', read_expr),
 }
 
+gobGeisha_ops = {
+    **gob1_ops,
+    0x24: gparam('oGeisha_gobinFunc'),
+    0x38: gparam('oGeisha_loadSound'),
+    0x00: fparam('oGeisha_gamePenetration', reads_uint16le, read_expr, read_expr),
+    0x00: xparam('oGeisha_gameDiving', reads_uint16le, read_expr, read_expr),
+    0x00: xparam('oGeisha_loadTitleMusic', read_expr),
+    0x00: gparam('oGeisha_playMusic', read_expr),
+    0x04: gparam('oGeisha_stopMusic', read_expr),
+    0x39: fparam('oGeisha_NOP', read_expr),
+    0x38: gparam('oGeisha_loadSound', read_expr),
+    0x04: fparam('oGeisha_caress1', read_expr),
+    0x04: fparam('oGeisha_caress2', read_expr),
+}
+
 gob2_ops = {
     **gob1_ops,
     0x09: gparam('o2_assign'),
