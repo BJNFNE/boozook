@@ -1121,6 +1121,30 @@ gobBargon_ops = {
     0x08: fparam('oBargon_NOP'),
 }
 
+gobFascin_ops = {
+    **gob2_ops,
+    0x00: fparam('oFascin_setWinSize'),
+    0x04: fparam('oFascin_closeWin'),
+    0x04: fparam('oFascin_activeWin'),
+    0x04: fparam('oFascin_openWin'),
+    0x08: fparam('oFascin_setRenderFlags'),
+    0x04: fparam('oFascin_setWinFlags'),
+    0x00: fparam('oFascin_playTirb'),
+    0x00: fparam('oFascin_playTira'),
+    0x00: fparam('oFascin_loadExtasy'),
+    0x00: fparam('oFascin_adlibPlay'),
+    0x04: fparam('oFascin_adlibStop'),
+    0x04: fparam('oFascin_adlibUnload'),
+    0x04: fparam('oFascin_loadMus1'),
+    0x04: fparam('oFascin_loadMus2'),
+    0x08: fparam('oFascin_loadMus3'),
+    0x08: fparam('oFascin_loadBatt1'),
+    0x08: fparam('oFascin_loadBatt2'),
+    0x08: fparam('oFascin_loadBatt3'),
+    0x0C: fparam('oFascin_loadMod'),
+    0x0C: fparam('oFascin_playProtracker'),
+}
+
 gob3_ops = {
     **gob2_ops,
     0x32: fparam('o3_copySprite', reads_uint16le, reads_uint16le, read_expr, read_expr, read_expr, read_expr, read_expr, read_expr, reads_uint16le),
