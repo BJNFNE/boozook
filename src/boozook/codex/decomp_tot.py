@@ -1107,7 +1107,8 @@ gob3_ops = {
     ),
 }
 
-    gob3_ops,
+gob4_ops ={
+    **gob3_ops,
     0x44: xparam('o4_draw0x44'),
     0x45: xparam('o4_draw0x45'),
     0x80: fparam('o4_playVmdOrMusic', reads_uint16le, read_expr, read_expr),
@@ -1120,7 +1121,7 @@ gob3_ops = {
 }
 
 gob5_ops = {
-    gob4_ops,
+    **gob4_ops,
     0x60: xparam('o5_deleteFile'),
     0x44: xparam('o5_istrlen'),
     0x00: fparam('o5_spaceShooter', reads_uint16le, read_expr, read_expr),
@@ -1141,14 +1142,14 @@ gob5_ops = {
 }
 
 gob6_ops = {
-    gob5_ops,
+    **gob5_ops,
     0x00: xparam('o6_loadCursor'),
     0x08: xparam('o6_assign'),
     0x24: fparam('o6_createSprite', reads_uint16le, read_expr, read_expr),
 }
 
 gob7_ops = {
-    gob6_ops,
+    **gob6_ops,
     0x0C: xparam('o7_setCursorToLoadFromExec'),
     0x44: xparam('o7_displayWarning'),
     0x44: xparam('o7_logString'),
