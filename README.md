@@ -39,11 +39,11 @@ Tools for extracting and editing Coktel Vision game resources.
 
 # Extract Game resources
 * To extract the Game resources (STK) use this command:
-* python -m boozook.archive -e PATH/TO/GAME/DIR
+* python -m boozook.archive PATH/TO/GAME/DIR
 
 # Rebuild Game resources
 To rebuild the extracted Game resources use this command:
-* 
+* python -m boozook.archive PATH/TO/GAME/DIR -r
 
 # Text extraction
 * To extract Text of an Script use this comnmand:
