@@ -1106,6 +1106,21 @@ gob2_ops = {
     0x4E: fparam('o2_writeData', read_expr, read_var_index, read_expr, read_expr),
 }
 
+gobBargon_ops = {
+    **gob2_ops,
+    0x00: fparam('oBargon_intro0'),
+    0x00: fparam('oBargon_intro1'),
+    0x00: fparam('oBargon_intro2'),
+    0x00: fparam('oBargon_intro3'),
+    0x04: fparam('oBargon_intro4'),
+    0x04: fparam('oBargon_intro5'),
+    0x04: fparam('oBargon_intro6'),
+    0x04: fparam('oBargon_intro7'),
+    0x08: fparam('oBargon_intro8'),
+    0x08: fparam('oBargon_intro9'),
+    0x08: fparam('oBargon_NOP'),
+}
+
 gob3_ops = {
     **gob2_ops,
     0x32: fparam('o3_copySprite', reads_uint16le, reads_uint16le, read_expr, read_expr, read_expr, read_expr, read_expr, read_expr, reads_uint16le),
