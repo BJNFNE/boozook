@@ -313,19 +313,7 @@ def fparam(name, *params):
 
 def o1_callSub(scf):
     offset = read_uint16le(scf.read(2))
-    printl('o1_callSub', offset)gobLittleRed_ops = {
-    **gob2_ops,
-    0x00: fparam('oLittleRed_setWinSize'),
-    0x04: fparam('oLittleRed_closeWin'),
-    0x04: fparam('oLittleRed_activeWin'),
-    0x04: fparam('oLittleRed_openWin'),
-    0x08: fparam('oLittleRed_setRenderFlags'),
-    0x04: fparam('oLittleRed_setWinFlags'),
-    0x30: fparam('oLittleRed_copySprite'),
-    0x00: fparam('oLittleRed_DOSInterrupt1'),
-    0x00: fparam('oLittleRed_DOSInterrupt2'),
-    0x00: fparam('oLittleRed_playProtracker'),
-}
+    printl('o1_callSub', offset)
     ctx['functions'].append(offset)
 
 
