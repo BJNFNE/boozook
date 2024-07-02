@@ -9,7 +9,12 @@ from boozook.codex import stk
 from boozook.codex.stk_compress import recompress_archive
 
 
-ARCHIVE_PATTERNS = ('*.STK','*.ITK','*.LTK','*.JTK',)
+ARCHIVE_PATTERNS = (
+    '*.STK',
+    '*.ITK',
+    '*.LTK',
+    '*.JTK',
+)
 
 
 def game_search(base_dir, patterns=('*',), patches=(), archives=ARCHIVE_PATTERNS):
@@ -27,10 +32,12 @@ def game_search(base_dir, patterns=('*',), patches=(), archives=ARCHIVE_PATTERNS
                         yield pattern, entry
 
     for archive_pattern in archives:
-        for archive_path in sorted(base_dir.glob(archive_pattern, case_sensitive=False)):
+        for archive_path in sorted(
+            base_dir.glob(archive_pattern, case_sensitive=False)
+        ):
             with stk.open(archive_path) as archive:
                 for pattern in patterns:
-                    for entry in archive.glob(pattern, case_sensitive=False):
+                    for entry in archive.glob(pattern):
                         if entry.name not in parsed_files:
                             parsed_files.add(entry.name)
                             yield pattern, entry
@@ -88,7 +95,7 @@ def open_game(
     base_dir,
     patches=(),
     allowed_patches=(),
-):
+) -> GameBase:
     return GameBase(
         base_dir,
         patches=patches,
@@ -100,7 +107,7 @@ class DirectoryBackedArchive(MutableMapping[str, bytes]):
     def __init__(self, directory: str | Path, allowed: Iterable[str] = ()) -> None:
         self.directory = Path(directory)
         self._allowed = frozenset(allowed)
-        self._popped = set()
+        self._popped: set[str] = set()
         self._cache: dict[str, bytes] = {}
 
     def __setitem__(self, key: str, content: bytes) -> None:

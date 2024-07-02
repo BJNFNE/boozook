@@ -1,7 +1,9 @@
 from collections import defaultdict
+from collections.abc import Iterator
 import io
 import itertools
 import struct
+from typing import cast
 from boozook.codex.base import write_uint16_le
 
 from boozook.codex.stk import replace_many
@@ -81,8 +83,8 @@ def reencode(text):
     )
 
 
-def extract_texts(sources, verify=True):
-    text_line_data = defaultdict(dict)
+def extract_texts(sources: dict[str, dict[int, tuple[int, int, bytes]]], verify: bool = True) -> Iterator[dict[str, bytes | None]]:
+    text_line_data: dict[int, dict[str, bytes | None]] = defaultdict(dict)
     for lang, texts in sources.items():
         for idx, (offset, size, line_data) in texts.items():
             text_line_data[idx][lang] = None
@@ -102,7 +104,7 @@ def extract_texts(sources, verify=True):
 
                 if verify:
                     # when reading tsv file, escaped double quotes are converted
-                    escaped = text_line_data[idx][lang]
+                    escaped = cast(bytes, text_line_data[idx][lang])
                     encoded = reencode(escaped)
                     assert line_data[18:].startswith(encoded), (
                         line_data[18:-2],
@@ -163,7 +165,7 @@ def encode_seq(i, seq):
         return seq
     try:
         return bytes([int(b'0x' + seq[:2], 16)]) + seq[2:]
-    except:
+    except Exception:
         return seq
 
 

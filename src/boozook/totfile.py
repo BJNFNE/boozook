@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 import io
 
 
@@ -81,7 +82,7 @@ def read_tot(stream):
     return script, functions, texts, resources
 
 
-def parse_text_data(data):
+def parse_text_data(data: bytes) -> Iterator[tuple[int, int, bytes]]:
     with io.BytesIO(data) as stream:
         items_count = reads_uint16le(stream)
         # assert items_count == items_count & 0x3FFF  # assertion breaks with woodruff

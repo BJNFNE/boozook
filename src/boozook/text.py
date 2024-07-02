@@ -1,35 +1,50 @@
 from collections import defaultdict
+from collections.abc import Callable, Iterable, Iterator, Sequence
 import csv
 import os
 from pathlib import Path
 
+from pakal.archive import ArchivePath
+
 from boozook.codex import cat, tot
 from boozook import archive
-from boozook.codex.crypt import CodePageEncoder, HebrewKeyReplacer, decrypt, encrypt
+from boozook.codex.crypt import CodePageEncoder, HebrewKeyReplacer, TextEncoder, decrypt, encrypt
 
 
 LANGS = ['INT'] + [lang.name for lang in cat.Language]
 
-TEXT_PATTERNS = {
+Decoder = Callable[[archive.GameBase, ArchivePath], Iterator[dict[str, bytes | None]]]
+Encoder = Callable[[archive.GameBase, Iterable[tuple[str, dict[str, bytes | None]]]], None]
+
+TEXT_PATTERNS: dict[str, tuple[str, Decoder, Encoder]] = {
     '*.TOT': ('tot', tot.write_parsed, tot.compose),
     '*.CAT': ('cat', cat.write_parsed, cat.compose),
 }
 
 
-def encrypt_texts(crypts, lines):
+def encrypt_texts(
+    crypts: dict[str, TextEncoder], lines: Iterable[dict[str, str | None]]
+) -> Iterator[tuple[str, dict[str, bytes | None]]]:
     for line in lines:
-        text = {'FILE': line.pop('FILE')}
+        fname = line.pop('FILE')
+        assert fname is not None
+        text: dict[str, bytes | None] = {}
         for lang in line.keys():
             text[lang] = encrypt(crypts, line, lang)
-        yield text
+        yield fname, text
 
 
-def escape_quotes(text):
+def escape_quotes(text: str) -> str:
     assert '""' not in text, text
     return text.replace('"', '""')
 
 
-def decode(game, patterns, texts_dir, crypts):
+def decode(
+    game: archive.GameBase,
+    patterns: dict[str, tuple[str, Decoder, Encoder]],
+    texts_dir: Path,
+    crypts: dict[str, TextEncoder],
+) -> None:
     open_files = set()
     for pattern, entry in game.search(patterns):
         agg_file, parse, _ = patterns[pattern]
@@ -56,7 +71,12 @@ def decode(game, patterns, texts_dir, crypts):
                 )
 
 
-def encode(game, patterns, texts_dir, crypts):
+def encode(
+    game: archive.GameBase,
+    patterns: dict[str, tuple[str, Decoder, Encoder]],
+    texts_dir: Path,
+    crypts: dict[str, TextEncoder],
+) -> None:
     encoders = set((name, composer) for _, (name, _, composer) in patterns.items())
     for agg_file, composer in encoders:
         text_file = texts_dir / (agg_file + '.tsv')
@@ -94,13 +114,13 @@ def menu():
     return parser.parse_args()
 
 
-def main(gamedir, rebuild, allowed=(), keys=False):
+def main(gamedir: str, rebuild: bool, allowed: Sequence[str]=(), keys: bool = False) -> None:
     patterns = TEXT_PATTERNS
 
     texts_dir = Path('texts')
     os.makedirs(texts_dir, exist_ok=True)
 
-    decoders = defaultdict(lambda: CodePageEncoder('cp850'))
+    decoders: dict[str, TextEncoder] = defaultdict(lambda: CodePageEncoder('cp850'))
     decoders['ISR'] = CodePageEncoder('windows-1255')
     decoders['KOR'] = CodePageEncoder('utf-8', errors='surrogateescape')
 

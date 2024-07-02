@@ -1,9 +1,10 @@
+from collections.abc import Iterator
 import io
 import operator
 import os
 from enum import IntEnum
 from itertools import groupby
-from typing import Iterable, Sequence
+from typing import Iterable, cast
 from boozook.archive import GameBase
 
 from pakal.archive import ArchivePath
@@ -24,15 +25,16 @@ class Language(IntEnum):
     ISR = 8
     JAP = 9
     ANG = 10
-    
+
+
 def compose(
     game: GameBase,
-    lines: Iterable[Sequence[str]],
+    lines: Iterable[tuple[str, dict[str, bytes | None]]],
 ) -> None:
-    grouped = groupby(lines, key=operator.itemgetter('FILE'))
+    grouped = groupby(lines, key=operator.itemgetter(0))
     for tfname, group in grouped:
         basename = os.path.basename(tfname)
-        group = list(group)
+        cgroup = list(group)
         for pattern, entry in game.search([basename]):
             with entry.open('rb') as f, io.BytesIO() as output:
                 version = f.read(18)
@@ -42,7 +44,7 @@ def compose(
                 for lang in Language:
                     pos = len(version) + lang * num_messages * LINE_SIZE
                     assert output.tell() == pos, (output.tell(), pos)
-                    for line in group:
+                    for _, line in cgroup:
                         enc = line[lang.name]
                         if enc is None:
                             output.seek(LINE_SIZE, io.SEEK_CUR)
@@ -68,15 +70,15 @@ def compose(
 def write_parsed(
     game: GameBase,
     entry: ArchivePath,
-) -> None:
+) -> Iterator[dict[str, bytes | None]]:
     with entry.open('rb') as f:
         version = f.read(18)
         num_messages = version[4]
         print(version)
-        text_line = [{} for num in range(num_messages)]
+        text_line: list[dict[str, bytes | None]] = [{} for num in range(num_messages)]
         for lang in Language:
             for num in range(num_messages):
-                line = f.read(LINE_SIZE)
+                line = cast(bytes, f.read(LINE_SIZE))
                 if not line:
                     break
                 # line, rest = line.split(b'\0', maxsplit=1)

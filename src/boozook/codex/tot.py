@@ -1,8 +1,9 @@
+from collections.abc import Iterator
 import io
 import operator
 from itertools import groupby
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Iterable
 from boozook.archive import GameBase
 from boozook.codex.cat import Language
 from boozook.codex.replace_tot import extract_texts, replace_texts, save_lang_file
@@ -17,31 +18,25 @@ def empty_lang(group, lang):
 
 def compose(
     game: GameBase,
-    lines: Iterable[Sequence[str]],
+    lines: Iterable[tuple[str, dict[str, bytes | None]]],
 ) -> None:
-    grouped = groupby(lines, key=operator.itemgetter('FILE'))
+    grouped = groupby(lines, key=operator.itemgetter(0))
     for tfname, group in grouped:
         basename = Path(tfname).name
-        group = list(group)
-        langs = list(group[0].keys())
-        langs.remove('FILE')
+        cgroup = [t for _, t in group]
+        langs = list(cgroup[0].keys())
         for pattern, entry in game.search([basename]):
             texts = get_original_texts(game, entry)
-            available_langs = [lang for lang in langs if not empty_lang(group, lang)]
+            available_langs = [lang for lang in langs if not empty_lang(cgroup, lang)]
             backup = {
-                lang: lang
-                if lang in texts
+                lang: lang if lang in texts
                 # else 'DAT'
                 else next((alang for alang in available_langs if alang != lang))
                 for lang in available_langs
             }
             new_texts = {
                 lang: dict(
-                    enumerate(
-                        replace_texts(
-                            iter(group), texts[backup[lang]], lang
-                        )
-                    )
+                    enumerate(replace_texts(iter(cgroup), texts[backup[lang]], lang))
                 )
                 for lang in available_langs
             }
@@ -89,7 +84,7 @@ def compose(
 def get_original_texts(
     game: GameBase,
     entry: ArchivePath,
-):
+) -> dict[str, dict[int, tuple[int, int, bytes]]]:
     sources = {}
     with entry.open('rb') as stream:
         _, _, texts_data, res_data = read_tot(stream)
@@ -108,7 +103,7 @@ def get_original_texts(
 def write_parsed(
     game: GameBase,
     entry: ArchivePath,
-) -> None:
+) -> Iterator[dict[str, bytes | None]]:
     texts = get_original_texts(game, entry)
     if not texts:
         return

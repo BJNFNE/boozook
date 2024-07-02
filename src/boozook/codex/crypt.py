@@ -1,7 +1,15 @@
 from dataclasses import asdict, dataclass
-from typing import Mapping
+from typing import Mapping, Protocol
 
 from boozook.codex.stk import replace_many
+
+
+class TextEncoder(Protocol):
+    def decode(self, text: bytes) -> str:
+        ...
+
+    def encode(self, text: str) -> bytes:
+        ...
 
 
 @dataclass
@@ -70,14 +78,22 @@ HebrewKeyReplacer = KeyReplacer(
 )
 
 
-def decrypt(crypts, texts, lang):
+def decrypt(
+    crypts: dict[str, TextEncoder],
+    texts: dict[str, bytes | None],
+    lang: str,
+) -> str:
     line = texts.get(lang, None)
     if line is None:
         return '---'
     return crypts[lang].decode(line)
 
 
-def encrypt(crypts, texts, lang):
+def encrypt(
+    crypts: dict[str, TextEncoder],
+    texts: dict[str, str | None],
+    lang: str,
+) -> bytes | None:
     line = texts.get(lang, None)
     if line is None or line == '---':
         return None
