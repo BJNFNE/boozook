@@ -9,7 +9,7 @@ from boozook import archive, font
 from boozook import text
 from boozook import graphics
 from boozook.codex import decomp_tot
-from boozook.prompt import Option, select_prompt
+from boozook.prompt import Option, SelectedOption, select_prompt
 
 
 def archive_advanced(ctx: dict) -> dict:
@@ -50,11 +50,17 @@ def scripts_advanced(ctx: dict) -> dict:
     exported = select_prompt(
         'Check to apply:', [Option('exported', 'Only decompile exported functions')]
     )
+    optable = select_prompt(
+        'Which game version to use as optable:', [Option(key, key) for key in decomp_tot.optables.keys()],
+        multi_select=False,
+    )
+    assert isinstance(optable, SelectedOption)
     return {
         'scripts': scripts.split() if scripts else ['*.TOT'],
         'lang': lang or None,
         'keys': bool(keys),
         'exported': bool(exported),
+        'optable': optable.key,
     }
 
 
@@ -205,6 +211,14 @@ def menu(argv=None):
             help='(experimental) Only decompile exported functions.',
         )
 
+        parser.add_argument(
+            '-o',
+            '--optable',
+            default='Gob3',
+            choices=decomp_tot.optables.keys(),
+            help='(experimental) Use a specific optable [default: Gob3].',
+        )
+
     parser.add_argument(
         '-r',
         '--rebuild',
@@ -246,6 +260,7 @@ def menu(argv=None):
             'keys': args.keys,
             'scripts': args.scripts,
             'exported': args.exported,
+            'optable': args.optable,
         }
     return ProgramArgs(
         gamedir=gamedir,

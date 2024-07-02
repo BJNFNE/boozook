@@ -290,7 +290,7 @@ def read_var_index(scf, arg_0=0, arg_4=0):
     # return expr
 
 
-def xparam(name):
+def xparam(name, *params):
     def inner(scf):
         raise NotImplementedError(name)
 
@@ -1245,7 +1245,7 @@ named_variables = {
 
 def opcode(scf, cmd, params):
     ctx['offset'] = scf.tell()
-    func = gob3_ops[cmd]
+    func = ctx['optable'][cmd]
     # print(cmd, hex(cmd), func)
     func(scf)
     ctx['offset'] = scf.tell()
@@ -1302,6 +1302,7 @@ def menu():
         default=['*.TOT'],
         help='script to decompile',
     )
+    parser.add_argument('version', help='script version to decompile', choices=optables.keys())
     parser.add_argument(
         '--lang',
         '-l',
@@ -1324,7 +1325,24 @@ def menu():
     return parser.parse_args()
 
 
-def main(gamedir, rebuild, scripts, lang=None, keys=False, exported=False):
+optables = {
+    'Gob1': gob1_ops, # Script_v1
+    'Gob2': gob2_ops, # Script_v2
+    'Gob3': gob3_ops, # Script_v3
+    'Ween': gob2_ops, # Script_v2
+    'Bargon': gobBargon_ops, # Script_Bargon
+    'Fascin': gobFascin_ops, # Script_Fascin
+    'Lost': gob3_ops, # Script_v3
+    'Woodruff': gob4_ops, # Script_v4
+    'Dynasty': gob5_ops, # Script_v5
+    'Urban': gob6_ops, # Script_v6
+    'Geisha': gobGeisha_ops, # Script_Geisha
+    'LittleRed': gobLittleRed_ops, # Script_LittleRed
+    'Adibou2': gob7_ops, # Script_v7
+}
+
+
+def main(gamedir, rebuild, scripts, lang=None, keys=False, exported=False, optable='Gob3'):
     game = archive.open_game(gamedir)
 
     decoders = defaultdict(lambda: CodePageEncoder('cp850'))
@@ -1344,6 +1362,8 @@ def main(gamedir, rebuild, scripts, lang=None, keys=False, exported=False):
 
     ctx['com_data'] = com_data
     ctx['com_entry'] = com_entry
+
+    ctx['optable'] = optables[optable]
 
     script_dir = Path('scripts')
     os.makedirs(script_dir, exist_ok=True)
