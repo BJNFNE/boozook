@@ -417,7 +417,7 @@ def video_o2_loadMult(scf):
             s_size = reads_uint16le(scf)
             _skip = scf.read(s_size * 2)
 
-            if tot_file[41] >= 51:
+            if ctx['ver_script'] >= 51:
                 s_size = reads_uint16le(scf)
                 _skip = scf.read(s_size * 14)
 
@@ -1373,7 +1373,10 @@ def main(gamedir, rebuild, scripts, lang=None, keys=False, exported=False, optab
         print(f'Decompiling {entry.name}...')
         texts_data = None
         with entry.open('rb') as tot_file:
-            script, functions, texts_data, res_data = read_tot(tot_file)
+            tot_data = tot_file.read()
+        
+        with io.BytesIO(tot_data) as tot_stream:
+            script, functions, texts_data, res_data = read_tot(tot_stream)
 
         tot_file = entry.read_bytes()
 
@@ -1388,6 +1391,9 @@ def main(gamedir, rebuild, scripts, lang=None, keys=False, exported=False, optab
                 for line in tot.write_parsed(game, entry)
             )
         )
+
+        # TODO: could it be used to automatically detect optable
+        ctx['ver_script'] = tot_file[41]
 
         ctx['lang'] = lang
 
