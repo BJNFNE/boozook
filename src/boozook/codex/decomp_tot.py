@@ -489,6 +489,12 @@ def video_o2_pushVars(scf):
     return params
 
 
+def video_o2_popVars(scf):
+    count = reads_uint8(scf)
+    params = [read_var_index(scf) for _ in range(count)]
+    return params
+
+
 def video_o2_playMult(scf):
     mult_data = reads_uint16le(scf)
     return mult_data >> 1, mult_data & 1
@@ -541,6 +547,7 @@ video_ops = {
     0x0A: vparam('o2_setRenderFlags', read_expr),
     0x10: lvparam('o1_loadAnim', video_o1_loadAnim),
     0x11: vparam('o1_freeAnim', read_expr),
+    0x12: vparam('o1_updateAnim', read_expr, read_expr, read_expr, read_expr, read_expr, reads_uint16le),
     0x13: vparam('o2_multSub', read_expr, read_expr, read_expr, read_expr, read_expr),
     0x14: vparam(
         'o2_initMult',
@@ -573,9 +580,12 @@ video_ops = {
     0x23: vparam('o2_readLIC', read_expr),
     0x24: vparam('o2_freeLIC'),
     0x25: vparam('o2_getCDTrackPos', read_var_index, read_var_index),
+    0x30: vparam('o2_loadFontToSprite', reads_uint16le, reads_uint16le, reads_uint16le, reads_uint16le, reads_uint16le),
+    0x31: vparam('o1_freeFontToSprite', reads_uint16le),
     0x40: vparam('o2_totSub', video_o2_totSub),
     0x41: vparam('o2_switchTotSub', reads_uint16le, reads_uint16le),
     0x42: lvparam('o2_pushVars', video_o2_pushVars),
+    0x43: vparam('o2_popVars', video_o2_popVars),
     0x50: lvparam('o2_loadMapObjects', video_o2_loadMapObjects),
     0x51: vparam('o2_freeGoblins'),
     0x52: vparam('o2_moveGoblin', read_expr, read_expr, read_expr),
@@ -695,20 +705,34 @@ goblin_lookup = {
     1015: 69,
     2005: 70,
     3: 71,
+    # erroring passthorugh - ween english demo
+    11: 11,
+    3000: 3000,
 }
 
 
 def gob_o2_handleGoblins(scf):
-    return [reads_uint16le(scf) * 4 for _ in range(6)]
+    return [f'var32_{reads_uint16le(scf) * 4}' for _ in range(6)]
 
+
+def gob_o1_dummy(scf):
+    scf.seek(-2, io.SEEK_CUR)
+    skip = read_uint16le(scf.read(2))
+    return list(scf.read(skip * 2))
+
+
+def gob_o2_infogrames(scf):
+    return [f'var8_{reads_uint16le(scf) * 4}']
 
 goblin_ops = {
-    0x00: xparam('o2_loadInfogramesIns'),
+    0x00: lcparam('o2_loadInfogramesIns', gob_o2_infogrames),
     0x01: cparam('o2_startInfogrames', reads_uint16le),
     0x02: cparam('o2_stopInfogrames', reads_uint16le),
-    0x09: xparam('o2_playInfogrames'),
+    0x09: lcparam('o2_playInfogrames', gob_o2_infogrames),
+    0x0B: cparam('o_weenNOP_11', reads_uint16le),
     0x27: lcparam('o2_handleGoblins', gob_o2_handleGoblins),
-    0x47: xparam('o1_dummy'),
+    0x47: lcparam('o1_dummy', gob_o1_dummy),
+    3000: cparam('o_weenNOP_3000'),
 }
 
 
@@ -824,7 +848,7 @@ def o2_printText(scf):
     expr = ' "'
     while True:
         while peek_uint8(scf) != ord('.') and peek_uint8(scf) != 200:
-            expr += scf.read(1).decode()
+            expr += scf.read(1).decode('cp437')  # should be `SELECCCIóN DEL TIPO` in Ween english demo - REGLAGE.TOT
 
         if peek_uint8(scf) != 200:
             scf.read(1)
@@ -1027,7 +1051,18 @@ gob1_ops = {
     0x31: fparam(
         'o1_loadSpriteContent', reads_uint16le, reads_uint16le, reads_uint16le
     ),
-    0x32: xparam('o1_copySprite'),
+    0x32: fparam(
+        'o1_copySprite',
+        reads_uint16le,
+        reads_uint16le,
+        read_expr,
+        read_expr,
+        read_expr,
+        read_expr,
+        read_expr,
+        read_expr,
+        reads_uint16le,
+    ),
     0x33: fparam(
         'o1_fillRect',
         reads_uint16le,
@@ -1053,8 +1088,8 @@ gob1_ops = {
     0x39: xparam('o1_stopSound'),
     0x3A: xparam('o1_loadSound'),
     0x3B: fparam('o1_freeSoundSlot', read_expr),
-    0x3C: xparam('o1_waitEndPlay'),
-    0x3D: xparam('o1_playComposition'),
+    0x3C: fparam('o1_waitEndPlay'),
+    0x3D: fparam('o1_playComposition', read_var_index, read_expr),
     0x3E: xparam('o1_getFreeMem'),
     0x3F: xparam('o1_checkData'),
     0x41: xparam('o1_cleanupStr'),
@@ -1419,7 +1454,7 @@ def main(gamedir, rebuild, scripts, lang=None, keys=False, exported=False, optab
         with (script_out).open('w', encoding='utf-8') as outstream:
             with redirect_stdout(outstream):
                 print(ctx['functions'])
-                with io.BytesIO(script) as scfa:
+                with io.BytesIO(script + b'$') as scfa:
                     works_on = on_functions(scfa) if exported else on_all_file(scfa)
                     for _ in works_on:
                         ctx['offset'] = scfa.tell()
