@@ -37,7 +37,7 @@ Tools for extracting and editing Coktel Vision game resources.
 * python -m boozook.codex.decomp_tot path\to\game\directory *.TOT (replace there *.TOT with the name of the TOT Script including TOT extension, after that an folder called scripts gets created that stores the output from the Script.)
 
 # Extract Game resources
-* To extract the Game resources (STK) use this command:
+* To extract the Game resource use this command:
 * python -m boozook.archive PATH/TO/GAME/DIR
 
 # Rebuild Game resources
@@ -47,7 +47,7 @@ To rebuild the extracted Game resources use this command:
 # Text extraction
 * To extract Text of an Script use this comnmand:
 * python -m boozook.text path/to/game/directory (after that in boozook's directory an new folder called text creates that contains 2 files, cat.tsv is for object names, and tot.tsv for the text of the dialouge)
-* To recompress now the modified text back into an STK use this command.
+* To recompress now the modified text back into an archive use this command.
 * python -m boozook.text /path/to/game/directory -r (after that you have an folder called an texts)
 
 # Graphics extraction
