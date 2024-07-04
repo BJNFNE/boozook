@@ -484,7 +484,7 @@ def video_o2_pushVars(scf):
             params.append((read_var_index(scf), 'animDataSize'))
             _skip = scf.read(1)
         else:
-            params.append((read_var_index(scf), 4))
+            params.append((read_expr(scf), 4))
 
     return params
 
@@ -563,6 +563,7 @@ video_ops = {
     0x15: vparam('o1_freeMult'),
     0x16: vparam('o1_animate'),
     0x17: lvparam('o2_loadMultObject', video_o2_loadMultObject),
+    0x18: vparam('o1_getAnimLayerInfo', read_expr, read_expr, read_var_index, read_var_index, read_var_index, read_var_index),
     0x19: vparam(
         'o1_getObjAnimSize',
         read_expr,
@@ -646,7 +647,7 @@ goblin_lookup = {
     12: 10,
     13: 71,
     14: 12,
-    15: 13,
+    # 15: 13,
     16: 14,
     21: 15,
     22: 16,
@@ -708,6 +709,7 @@ goblin_lookup = {
     # erroring passthorugh - ween english demo
     11: 11,
     3000: 3000,
+    15: 15,
 }
 
 
@@ -730,6 +732,7 @@ goblin_ops = {
     0x02: cparam('o2_stopInfogrames', reads_uint16le),
     0x09: lcparam('o2_playInfogrames', gob_o2_infogrames),
     0x0B: cparam('o_weenNOP_11', reads_uint16le),
+    0x0F: cparam('o1_setRelaxTime'),
     0x27: lcparam('o2_handleGoblins', gob_o2_handleGoblins),
     0x47: lcparam('o1_dummy', gob_o1_dummy),
     3000: cparam('o_weenNOP_3000'),
@@ -777,13 +780,6 @@ def o1_whileDo(scf):
     func_block(scf, 1)
     printl('}')
 
-def o1_return(scf):
-    # Implement here the printIndent() function
-    printl('return;\n')
-
-def o1_returnTo(scf):
-    # Implement here the printIndent() function
-    printl('return;\n')
 
 def o1_loadSpriteToPos(scf):
     printl(
@@ -937,6 +933,11 @@ def func_block(scf, ret_flag):
 
     block_start = scf.tell()
 
+    if scf.read(1) == b'':
+        print('WARNING: EOF')
+        return
+    scf.seek(-1, 1)
+
     block_type = scf.read(1)[0]
     cmd_count = scf.read(1)[0]
 
@@ -998,7 +999,13 @@ def func_block(scf, ret_flag):
         # print('END', end + 128, scf.read(end - begin))
         # scf.seek(end)
 
-    assert scf.tell() - block_start == size + 2, (scf.tell() - block_start, size + 2)
+    left = size + 2 - (scf.tell() - block_start)
+    if left != 0:
+        if left > 0:
+            _skip = scf.read(left)
+            print('WARNING: Skipped', _skip)
+        else:
+            raise ValueError('Block size mismatch: {} != {}', scf.tell() - block_start, size + 2)
     ctx['indent'] -= 1
     ctx['counter'] = last_level
     ctx['cmd_count'] = last_cmd_count
@@ -1033,7 +1040,109 @@ def o1_setcmdCount(scf):
     ctx['counter'] = 0
     printl('o1_setcmdCount', ctx['cmd_count'])
 
-gob1_ops = { # Gob1, Bargon, Fascination, LittleRed
+def o1_loadSound(scf):
+    slot = read_expr(scf)
+    id = reads_uint16le(scf)
+    if id == 0xFFFF:
+        msg = scf.read(9).decode('ascii')
+        printl('o1_loadSound', slot,id, msg.split('\0'))
+    else:
+        printl('o1_loadSound', slot, id)
+
+
+def o1_printText(scf):
+    params = [read_expr(scf) for _ in range(5)]
+    while peek_uint8(scf) != 200:
+        expr = '"'
+        while peek_uint8(scf) != ord('.') and peek_uint8(scf) != 200:
+            expr += scf.read(1).decode('cp437')
+        
+        if peek_uint8(scf) != 200:
+            _skip = scf.read(1)
+            expr += '" '
+            if peek_uint8(scf) in {16, 17, 18, 23, 24, 25, 26, 27, 28}:
+                expr += read_var_index(scf)
+            scf.read(1)
+        else:
+            expr += '"'
+        params.append(expr)
+    _skip = scf.read(1)
+
+    printl('o1_printText', *params)
+
+goblin1_ops = {
+    # 0: cparam('o1_UNKNOW', reads_uint16le, reads_uint16le, reads_uint16le),
+    1: cparam('o1_setState'),
+    2: cparam('o1_setCurFrame'),
+    4: cparam('o1_setMultState'),
+    5: cparam('o1_setOrder'),
+    8: cparam('o1_setType'),
+    9: cparam('o1_setNoTick'),
+    10: cparam('o1_setPickable'),
+    12: cparam('o1_setXPos'),
+    13: cparam('o1_setYPos'),
+    21: cparam('o1_getState'),
+    22: cparam('o1_getCurFrame'),
+    32: cparam('o1_getObjMaxFrame'),
+    40: cparam('o1_manipulateMap', reads_uint16le, reads_uint16le, reads_uint16le),
+    44: cparam('o1_setPassMap', reads_uint16le, reads_uint16le, reads_uint16le),
+    150: cparam('o1_setGoblinMultState', reads_uint16le, reads_uint16le, reads_uint16le),
+    152: cparam('o1_setGoblinUnk14', reads_uint16le, reads_uint16le),
+    200: cparam('o1_setItemIdInPocket', reads_uint16le),
+    201: cparam('o1_setItemIndInPocket', reads_uint16le),
+    1000: cparam('o1_loadObjects', reads_uint16le),
+    1001: cparam('o1_freeObjects'),
+    1002: cparam('o1_animateObjects'),
+    1003: cparam('o1_drawObjects'),
+    1004: cparam('o1_loadMap'),
+    1005: cparam('o1_moveGoblin', reads_uint16le, reads_uint16le),
+    1008: cparam('o1_loadGoblin'),
+    1009: cparam('o1_writeTreatItem', reads_uint16le, reads_uint16le, reads_uint16le),
+    1010: cparam('o1_moveGoblin0'),
+    1015: cparam('o1_setGoblinObjectsPos', reads_uint16le, reads_uint16le),
+    2005: cparam('o1_initGoblin'),
+}
+
+
+def o1_goblinFunc(scf):
+    gobParams = {}
+    gobParams['extraData'] = 0
+    gobParams['objIndex'] = -1
+
+    cmd = reads_uint16le(scf)
+    _skip = scf.read(2)
+
+    if 0 < cmd < 17:
+        gobParams['objIndex'] = reads_uint16le(scf)
+        gobParams['extraData'] = reads_uint16le(scf)
+    if 90 < cmd < 107:
+        gobParams['objIndex'] = reads_uint16le(scf)
+        gobParams['extraData'] = reads_uint16le(scf)
+        cmd -= 90
+    if 110 < cmd < 128:
+        gobParams['objIndex'] = reads_uint16le(scf)
+        cmd -= 90
+    elif 20 < cmd < 38:
+        gobParams['objIndex'] = reads_uint16le(scf)
+
+    if cmd < 40 and gobParams['objIndex'] == -1:
+        printl('o1_goblinFunc', cmd)
+        return
+
+    # TODO: print function name
+    gfunc = goblin1_ops.get(cmd)
+    if gfunc is None:
+        raise ValueError(f'Missing goblin op {hex(cmd)} = {cmd}')
+    gfunc(scf)
+
+
+def o5_istrlen(scf):
+    if peek_uint8(scf) == 0x80:
+        _skip = scf.read(1)
+    printl('o5_istrlen', read_var_index(scf), read_var_index(scf))
+
+
+gob1_ops = { # version 49 - Gob1, Bargon, Fascination, LittleRed
     0x00: gparam('o1_callSub'),
     0x01: gparam('o1_callSub'),
     0x02: gparam('o1_printTotText'),
@@ -1044,7 +1153,7 @@ gob1_ops = { # Gob1, Bargon, Fascination, LittleRed
     0x08: gparam('o1_if'),
     0x09: gparam('o1_assign'),  # check diff in Fascination
     0x0A: gparam('o1_loadSpriteToPos'),
-    0x11: xparam('o1_printText'),
+    0x11: gparam('o1_printText'),
     0x12: gparam('o1_loadTot'),
     0x13: gparam('o1_palLoad'),
     0x14: fparam('o1_keyFunc', reads_uint16le),  # check diff in little red
@@ -1057,8 +1166,8 @@ gob1_ops = { # Gob1, Bargon, Fascination, LittleRed
     0x21: fparam('o1_renewTimeInVars'),
     0x22: fparam('o1_speakerOn', read_expr),
     0x23: fparam('o1_speakerOff'),
-    0x24: xparam('o1_putPixel'),
-    0x25: xparam('o1_goblinFunc'),
+    0x24: fparam('o1_putPixel', reads_uint16le, read_expr, read_expr, read_expr),
+    0x25: gparam('o1_goblinFunc'),
     0x26: fparam(
         'o1_createSprite',
         reads_uint16le,
@@ -1105,13 +1214,13 @@ gob1_ops = { # Gob1, Bargon, Fascination, LittleRed
     0x36: xparam('o1_invalidate'),
     0x37: fparam('o1_setBackDelta', read_expr, read_expr),
     0x38: fparam('o1_playSound', read_expr, read_expr, read_expr),
-    0x39: xparam('o1_stopSound', read_expr),
-    0x3A: xparam('o1_loadSound'),
+    0x39: fparam('o1_stopSound', read_expr),
+    0x3A: gparam('o1_loadSound'),
     0x3B: fparam('o1_freeSoundSlot', read_expr),
     0x3C: fparam('o1_waitEndPlay'),
     0x3D: fparam('o1_playComposition', read_var_index, read_expr), # check diff in little red
-    0x3E: xparam('o1_getFreeMem'),
-    0x3F: xparam('o1_checkData'),
+    0x3E: fparam('o1_getFreeMem', read_var_index, read_var_index),
+    0x3F: fparam('o1_checkData', read_expr, read_var_index),
     0x41: xparam('o1_cleanupStr'),
     0x42: fparam('o1_insertStr', read_var_index, read_expr),
     0x43: xparam('o1_cutStr'),
@@ -1147,8 +1256,8 @@ gob2_ops = { # Version 50 - Gob2, Ween
     0x09: gparam('o2_assign'),
     0x11: gparam('o2_printText'),
     0x17: fparam('o2_animPalInit', reads_uint16le, read_expr, read_expr),
-    0x18: xparam('o2_addHotspot'),
-    0x19: xparam('o2_removeHotspot'),
+    0x18: fparam('o2_addHotspot', read_expr, read_expr, read_expr, read_expr, read_expr, read_expr, reads_uint16le),
+    0x19: fparam('o2_removeHotspot', read_expr),
     0x1A: gparam('o2_getTotTextItemPart'),
     0x25: gparam('o2_goblinFunc'),
     0x39: fparam('o2_stopSound', read_expr),
@@ -1162,12 +1271,11 @@ gob2_ops = { # Version 50 - Gob2, Ween
 
 gob3_ops = {  # version 51 - Gob3, Adibou1, Inca2, Woodruff, Dynasty
     **gob2_ops,
-    0x0A: xparam('o1_setRenderFlags'), # Adibou1
-    0x22: xparam('o3_speakerOn'),
-    0x23: xparam('o3_speakerOff'),
+    0x22: fparam('o3_speakerOn', read_expr),
+    0x23: fparam('o3_speakerOff'),
     0x25: xparam('oInca2_spaceShooter'),
     0x32: fparam('o3_copySprite', reads_uint16le, reads_uint16le, read_expr, read_expr, read_expr, read_expr, read_expr, read_expr, reads_uint16le),
-    0x45: xparam('o5_istrlen'),
+    0x45: gparam('o5_istrlen'),
 }
 
 
