@@ -1104,6 +1104,17 @@ goblin1_ops = {
 }
 
 
+geisha_ops = {
+    0: cparam('oGeisha_gamePenetration', reads_uint16le, reads_uint16le, reads_uint16le, reads_uint16le),
+    1: cparam('oGeisha_gameDiving', reads_uint16le, reads_uint16le, reads_uint16le),
+    2: cparam('oGeisha_loadTitleMusic'),
+    3: cparam('oGeisha_playMusic'),
+    4: cparam('oGeisha_stopMusic'),
+    6: cparam('oGeisha_caress1'),
+    7: cparam('oGeisha_caress2'),
+}
+
+
 def o1_goblinFunc(scf):
     gobParams = {}
     gobParams['extraData'] = 0
@@ -1142,6 +1153,18 @@ def o5_istrlen(scf):
     printl('o5_istrlen', read_var_index(scf), read_var_index(scf))
 
 
+def oGeisha_goblinFunc(scf):
+    
+    cmd = reads_uint16le(scf)
+    _skip = scf.read(2)
+
+    gfunc = geisha_ops.get(cmd)
+    if gfunc is None:
+        raise ValueError(f'Missing goblin op {hex(cmd)} = {cmd}')
+    gfunc(scf)
+
+
+
 gob1_ops = { # version 49 - Gob1, Bargon, Fascination, LittleRed
     0x00: gparam('o1_callSub'),
     0x01: gparam('o1_callSub'),
@@ -1159,7 +1182,7 @@ gob1_ops = { # version 49 - Gob1, Bargon, Fascination, LittleRed
     0x14: fparam('o1_keyFunc', reads_uint16le),  # check diff in little red
     0x15: fparam('o1_capturePush', read_expr, read_expr, read_expr, read_expr),
     0x16: fparam('o1_capturePop'),
-    0x17: xparam('o1_animPalInit'),
+    0x17: fparam('o1_animPalInit', reads_uint16le, read_expr, read_expr),
     0x1E: gparam('o1_drawOperations'),
     0x1F: gparam('o1_setcmdCount'),
     0x20: fparam('o1_return'),
@@ -1233,7 +1256,7 @@ gob1_ops = { # version 49 - Gob1, Bargon, Fascination, LittleRed
     0x4A: fparam('o1_blitCursor'),
     0x4B: fparam('o1_loadFont', read_expr, reads_uint16le),
     0x4C: fparam('o1_freeFont', reads_uint16le),
-    0x4D: xparam('o1_readData'),
+    0x4D: fparam('o1_readData', read_expr, read_var_index, read_expr, read_expr),
     0x4E: fparam('o1_writeData', read_expr, read_var_index, read_expr, read_expr),
     0x4F: fparam('o1_manageDataFile', read_expr),
 }
@@ -1241,13 +1264,13 @@ gob1_ops = { # version 49 - Gob1, Bargon, Fascination, LittleRed
 
 gobGeisha_ops = { # version 48 - Geisha
     **gob1_ops,
-    0x03: xparam('oGeisha_loadCursor'),
-    0x12: xparam('oGeisha_loadTot'),
-    0x25: xparam('oGeisha_goblinFunc'),
-    0x3A: xparam('oGeisha_loadSound'),
-    0x3F: xparam('oGeisha_checkData'),
-    0x4D: xparam('oGeisha_readData'),
-    0x4E: xparam('oGeisha_writeData'),
+    # 0x03: xparam('oGeisha_loadCursor'),
+    # 0x12: xparam('oGeisha_loadTot'),
+    0x25: gparam('oGeisha_goblinFunc'),
+    0x3A: fparam('oGeisha_loadSound', read_expr, read_expr),
+    # 0x3F: fparam('oGeisha_checkData', read_expr, read_var_index),
+    0x4D: fparam('oGeisha_readData', read_expr, read_var_index),
+    0x4E: fparam('oGeisha_writeData', read_expr, read_var_index),
 }
 
 
