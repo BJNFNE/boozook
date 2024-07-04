@@ -777,6 +777,13 @@ def o1_whileDo(scf):
     func_block(scf, 1)
     printl('}')
 
+def o1_return(scf):
+    # Implement here the printIndent() function
+    printl('return;\n')
+
+def o1_returnTo(scf):
+    # Implement here the printIndent() function
+    printl('return;\n')
 
 def o1_loadSpriteToPos(scf):
     printl(
