@@ -9,7 +9,7 @@ from boozook.codex import stk
 from boozook.codex.stk_compress import recompress_archive
 
 
-ARCHIVE_FORMATS = (
+ARCHIVE_PATTERNS = (
     '*.STK',
     '*.ITK',
     '*.LTK',
@@ -17,7 +17,7 @@ ARCHIVE_FORMATS = (
 )
 
 
-def game_search(base_dir, patterns=('*',), patches=(), archives=ARCHIVE_FORMATS):
+def game_search(base_dir, patterns=('*',), patches=(), archives=ARCHIVE_PATTERNS):
     parsed_files = set()
 
     base_dir = Path(base_dir)
@@ -136,7 +136,7 @@ class DirectoryBackedArchive(MutableMapping[str, bytes]):
         self._popped.add(key)
 
 
-def extract_archive(game, extract_dir, patterns=ARCHIVE_FORMATS):
+def extract_archive(game, extract_dir, patterns=ARCHIVE_PATTERNS):
     for pattern, entry in game.search(patterns):
         base_archive = entry.name
         ext_archive = extract_dir / base_archive
@@ -150,7 +150,7 @@ def extract_archive(game, extract_dir, patterns=ARCHIVE_FORMATS):
                 # )
 
 
-def rebuild_archive(game, extract_dir, patterns=ARCHIVE_FORMATS):
+def rebuild_archive(game, extract_dir, patterns=ARCHIVE_PATTERNS):
     patch_dir = Path('.')
     os.makedirs(patch_dir, exist_ok=True)
     for pattern, entry in game.search(patterns):
@@ -173,7 +173,7 @@ def menu():
     parser.add_argument(
         'patterns',
         nargs='*',
-        default=ARCHIVE_FORMATS,
+        default=ARCHIVE_PATTERNS,
         help='game directory with files to extract',
     )
     parser.add_argument(
@@ -188,7 +188,7 @@ def menu():
 def main(
     gamedir,
     rebuild,
-    patterns=ARCHIVE_FORMATS,
+    patterns=ARCHIVE_PATTERNS,
 ):
     extract_dir = Path('extracted')
     os.makedirs(extract_dir, exist_ok=True)
