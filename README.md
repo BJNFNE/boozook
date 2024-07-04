@@ -3,13 +3,12 @@ Tools for extracting and editing Coktel Vision game resources.
 
 # Features
 * Decompile game scripts partially (TOT/0OT)
-* Extract and Rebuild game resources (STK)
+* Extract and Rebuild game resources (STK/ITK/LTK/JTK) (Boozook can extract and rebuild either STK10 and STK21)
 * Image extraction partially
 
 # Upcoming Features
 * extract images with correct colors.
-* decompile scripts such that all file have purpose and the output can be understood (TOT/0OT).
-* recompile Game scripts.
+* Better support to recompile Game scripts.
 
 # Suported games by boozook
 * Adi 4 (DEV6)
