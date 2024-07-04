@@ -61,7 +61,7 @@ def extract(stream: IO[bytes]) -> Iterator[Tuple[str, STKFileEntry]]:
     file_count = read_uint16_le(stream)
     for _i in range(file_count):
         raw_fname = stream.read(13)
-        file_name = raw_fname.split(b'\0')[0].decode()
+        file_name = raw_fname.split(b'\0')[0].decode('cp437')
         size = read_uint32_le(stream)
         offset = read_uint32_le(stream)
         # assert offset % 2 == 0, offset

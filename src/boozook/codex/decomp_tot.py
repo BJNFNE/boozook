@@ -957,16 +957,18 @@ def func_block(scf, ret_flag):
 
     if cmd_count == 0:
         return
-
-    params = {
-        'counter': 0,
-        'ret_flag': ret_flag,
-    }
     assert cmd_count > 0
 
+
+    last_level = ctx.get('counter', 0)
+    last_cmd_count = ctx.get('cmd_count', 0)
+
+    ctx['cmd_count'] = cmd_count
+    ctx['counter'] = 0
+    ctx['ret_flag'] = ret_flag
     ctx['indent'] += 1
 
-    while params['counter'] < cmd_count:
+    while ctx['counter'] < ctx['cmd_count']:
         # print('LOOP', scf, scf.tell(), ret_flag)
 
         cmd_t = reads_uint8(scf)
@@ -978,7 +980,7 @@ def func_block(scf, ret_flag):
         else:
             cmd2 = 0
 
-        params['counter'] += 1
+        ctx['counter'] += 1
 
         if cmd2 == 0:
             cmd >>= 4
@@ -989,7 +991,7 @@ def func_block(scf, ret_flag):
         # begin = scf.tell()
         # print('BEGIN', begin + 128)
 
-        opcode(scf, cmd_u, params)
+        opcode(scf, cmd_u)
 
         # end = scf.tell()
         # scf.seek(begin)
@@ -998,6 +1000,8 @@ def func_block(scf, ret_flag):
 
     assert scf.tell() - block_start == size + 2, (scf.tell() - block_start, size + 2)
     ctx['indent'] -= 1
+    ctx['counter'] = last_level
+    ctx['cmd_count'] = last_cmd_count
 
 
 def text_hint(ctx, textid):
@@ -1020,26 +1024,35 @@ def o2_getTotTextItemPart(scf):
     printl(f'{var_string} = o2_getTotTextItemPart', textid, part, '//', text_hint(ctx, textid))
 
 
-gob1_ops = {
+def o1_assign(scf):
+    printl('{} = {}'.format(read_var_index(scf), read_expr(scf)))
+
+
+def o1_setcmdCount(scf):
+    ctx['cmd_count'] = reads_uint8(scf)
+    ctx['counter'] = 0
+    printl('o1_setcmdCount', ctx['cmd_count'])
+
+gob1_ops = { # Gob1, Bargon, Fascination, LittleRed
     0x00: gparam('o1_callSub'),
     0x01: gparam('o1_callSub'),
     0x02: gparam('o1_printTotText'),
     0x03: fparam('o1_loadCursor', reads_uint16le, reads_uint8),
     0x05: gparam('o1_switch'),
-    0x06: gparam('o1_repeatUntil'),
+    0x06: gparam('o1_repeatUntil'),  # check diff in Fascination
     0x07: gparam('o1_whileDo'),
     0x08: gparam('o1_if'),
-    0x09: xparam('o1_assign'),
+    0x09: gparam('o1_assign'),  # check diff in Fascination
     0x0A: gparam('o1_loadSpriteToPos'),
     0x11: xparam('o1_printText'),
     0x12: gparam('o1_loadTot'),
     0x13: gparam('o1_palLoad'),
-    0x14: fparam('o1_keyFunc', reads_uint16le),
+    0x14: fparam('o1_keyFunc', reads_uint16le),  # check diff in little red
     0x15: fparam('o1_capturePush', read_expr, read_expr, read_expr, read_expr),
     0x16: fparam('o1_capturePop'),
     0x17: xparam('o1_animPalInit'),
     0x1E: gparam('o1_drawOperations'),
-    0x1F: xparam('o1_setcmdCount'),
+    0x1F: gparam('o1_setcmdCount'),
     0x20: fparam('o1_return'),
     0x21: fparam('o1_renewTimeInVars'),
     0x22: fparam('o1_speakerOn', read_expr),
@@ -1058,7 +1071,7 @@ gob1_ops = {
     0x31: fparam(
         'o1_loadSpriteContent', reads_uint16le, reads_uint16le, reads_uint16le
     ),
-    0x32: fparam(
+    0x32: fparam(  # check diff in Fascination
         'o1_copySprite',
         reads_uint16le,
         reads_uint16le,
@@ -1096,11 +1109,11 @@ gob1_ops = {
     0x3A: xparam('o1_loadSound'),
     0x3B: fparam('o1_freeSoundSlot', read_expr),
     0x3C: fparam('o1_waitEndPlay'),
-    0x3D: fparam('o1_playComposition', read_var_index, read_expr),
+    0x3D: fparam('o1_playComposition', read_var_index, read_expr), # check diff in little red
     0x3E: xparam('o1_getFreeMem'),
     0x3F: xparam('o1_checkData'),
     0x41: xparam('o1_cleanupStr'),
-    0x42: xparam('o1_insertStr'),
+    0x42: fparam('o1_insertStr', read_var_index, read_expr),
     0x43: xparam('o1_cutStr'),
     0x44: xparam('o1_strstr'),
     0x45: fparam('o1_istrlen', read_var_index, read_var_index),
@@ -1112,26 +1125,24 @@ gob1_ops = {
     0x4B: fparam('o1_loadFont', read_expr, reads_uint16le),
     0x4C: fparam('o1_freeFont', reads_uint16le),
     0x4D: xparam('o1_readData'),
-    0x4E: xparam('o1_writeData'),
+    0x4E: fparam('o1_writeData', read_expr, read_var_index, read_expr, read_expr),
     0x4F: fparam('o1_manageDataFile', read_expr),
 }
 
-gobGeisha_ops = {
+
+gobGeisha_ops = { # version 48 - Geisha
     **gob1_ops,
-    0x24: xparam('oGeisha_gobinFunc'),
-    0x38: xparam('oGeisha_loadSound'),
-    0x00: xparam('oGeisha_gamePenetration', reads_uint16le, read_expr, read_expr),
-    0x00: xparam('oGeisha_gameDiving', reads_uint16le, read_expr, read_expr),
-    0x00: xparam('oGeisha_loadTitleMusic', read_expr),
-    0x00: xparam('oGeisha_playMusic', read_expr),
-    0x04: xparam('oGeisha_stopMusic', read_expr),
-    0x39: xparam('oGeisha_NOP', read_expr),
-    0x38: xparam('oGeisha_loadSound', read_expr),
-    0x04: xparam('oGeisha_caress1', read_expr),
-    0x04: xparam('oGeisha_caress2', read_expr),
+    0x03: xparam('oGeisha_loadCursor'),
+    0x12: xparam('oGeisha_loadTot'),
+    0x25: xparam('oGeisha_goblinFunc'),
+    0x3A: xparam('oGeisha_loadSound'),
+    0x3F: xparam('oGeisha_checkData'),
+    0x4D: xparam('oGeisha_readData'),
+    0x4E: xparam('oGeisha_writeData'),
 }
 
-gob2_ops = {
+
+gob2_ops = { # Version 50 - Gob2, Ween
     **gob1_ops,
     0x09: gparam('o2_assign'),
     0x11: gparam('o2_printText'),
@@ -1148,144 +1159,49 @@ gob2_ops = {
     0x4E: fparam('o2_writeData', read_expr, read_var_index, read_expr, read_expr),
 }
 
-gobBargon_ops = {
-    **gob2_ops,
-    0x00: xparam('oBargon_intro0'),
-    0x00: xparam('oBargon_intro1'),
-    0x00: xparam('oBargon_intro2'),
-    0x00: xparam('oBargon_intro3'),
-    0x04: xparam('oBargon_intro4'),
-    0x04: xparam('oBargon_intro5'),
-    0x04: xparam('oBargon_intro6'),
-    0x04: xparam('oBargon_intro7'),
-    0x08: xparam('oBargon_intro8'),
-    0x08: xparam('oBargon_intro9'),
-    0x08: xparam('oBargon_NOP'),
-}
 
-gobFascin_ops = {
+gob3_ops = {  # version 51 - Gob3, Adibou1, Inca2, Woodruff, Dynasty
     **gob2_ops,
-    0x00: xparam('oFascin_setWinSize'),
-    0x04: xparam('oFascin_closeWin'),
-    0x04: xparam('oFascin_activeWin'),
-    0x04: xparam('oFascin_openWin'),
-    0x08: xparam('oFascin_setRenderFlags'),
-    0x04: xparam('oFascin_setWinFlags'),
-    0x00: xparam('oFascin_playTirb'),
-    0x00: xparam('oFascin_playTira'),
-    0x00: xparam('oFascin_loadExtasy'),
-    0x00: xparam('oFascin_adlibPlay'),
-    0x04: xparam('oFascin_adlibStop'),
-    0x04: xparam('oFascin_adlibUnload'),
-    0x04: xparam('oFascin_loadMus1'),
-    0x04: xparam('oFascin_loadMus2'),
-    0x08: xparam('oFascin_loadMus3'),
-    0x08: xparam('oFascin_loadBatt1'),
-    0x08: xparam('oFascin_loadBatt2'),
-    0x08: xparam('oFascin_loadBatt3'),
-    0x0C: xparam('oFascin_loadMod'),
-    0x0C: xparam('oFascin_playProtracker'),
-}
-
-gobLittleRed_ops = {
-    **gob2_ops,
-    0x00: xparam('oLittleRed_setWinSize'),
-    0x04: xparam('oLittleRed_closeWin'),
-    0x04: xparam('oLittleRed_activeWin'),
-    0x04: xparam('oLittleRed_openWin'),
-    0x08: xparam('oLittleRed_setRenderFlags'),
-    0x04: xparam('oLittleRed_setWinFlags'),
-    0x30: xparam('oLittleRed_copySprite'),
-    0x00: xparam('oLittleRed_DOSInterrupt1'),
-    0x00: xparam('oLittleRed_DOSInterrupt2'),
-    0x00: xparam('oLittleRed_playProtracker'),
-}
-
-gob3_ops = {
-    **gob2_ops,
+    0x0A: xparam('o1_setRenderFlags'), # Adibou1
+    0x22: xparam('o3_speakerOn'),
+    0x23: xparam('o3_speakerOff'),
+    0x25: xparam('oInca2_spaceShooter'),
     0x32: fparam('o3_copySprite', reads_uint16le, reads_uint16le, read_expr, read_expr, read_expr, read_expr, read_expr, read_expr, reads_uint16le),
-    0x24: xparam('o3_wobble'),
-    0x18: xparam('o3_getTotTextItemPart'),
+    0x45: xparam('o5_istrlen'),
 }
 
 
-gob4_ops ={
+gob6_ops = {  # version 52 - Playtoons, Adibou2, Urban
     **gob3_ops,
-    0x44: xparam('o4_draw0x44'),
-    0x45: xparam('o4_draw0x45'),
-    0x80: fparam('o4_playVmdOrMusic', reads_uint16le, read_expr, read_expr),
-    0x88: xparam('o4_draw0x8C'),
-    0x90: xparam('o4_draw0x90'),
-    0xA0: xparam('o4_draw0xA1'),
-    0xA0: xparam('o4_draw0xA2'),
-    0xA4: fparam('o4_draw0xA4', read_expr),
-    0x54: xparam('o4_draw0x57'),
+    0x03: xparam('o6_loadCursor'),
+    # 0x03: xparam('o7_loadCursor'),
+    0x09: xparam('o6_assign'),
+    0x0B: xparam('oPlaytoons_printText'),
+    0x11: xparam('o7_printText'),
+	0x19: xparam('o6_removeHotspot'),
+    0x1B: xparam('oPlaytoons_F_1B'),
+    0x24: xparam('oPlaytoons_putPixel'),
+    0x27: xparam('oPlaytoons_freeSprite'),
+	0x32: xparam('o1_copySprite'),
+	0x33: xparam('o6_fillRect'),
+    # 0x33: xparam('o7_fillRect'),
+    0x3F: xparam('oPlaytoons_checkData'),
+    # 0x3F: xparam('o7_checkData'),
+    0x34: xparam('o7_drawLine'),
+    0x36: xparam('o7_invalidate'),
+    0x3E: xparam('o7_getFreeMem'),
+    0x4E: xparam('o7_writeData'),
+    0x4D: xparam('oPlaytoons_readData'),
+    # 0x4D: xparam('o7_readData'),
 }
 
-gob5_ops = {
-    **gob4_ops,
-    0x60: xparam('o5_deleteFile'),
-    0x44: xparam('o5_istrlen'),
-    0x00: fparam('o5_spaceShooter', reads_uint16le, read_expr, read_expr),
-    0x00: xparam('o5_getSystemCDSpeed'),
-    0x00: xparam('o5_getSystemRAM'),
-    0x00: xparam('o5_getSystemCPUSpeed'),
-    0x04: xparam('o5_getSystemDrawSpeed'),
-    0x04: xparam('o5_totalSystemSpecs', read_expr),
-    0x04: xparam('o5_saveSystemSpecs'),
-    0x04: xparam('o5_loadSystemSpecs', read_var_index, read_var_index),
-    0x08: xparam('o5_gob92', read_expr, read_var_index),
-    0x08: xparam('o5_gob95', read_expr, read_var_index, read_expr, read_expr),
-    0x08: xparam('o5_gob96', read_expr, read_var_index, read_expr, read_expr),
-    0x08: xparam('o5_gob97', read_expr, read_var_index, read_expr, read_expr),
-    0x0C: xparam('o5_gob98', read_expr, read_var_index, read_expr, read_expr),
-    0x0C: xparam('o5_gob100', read_expr, read_var_index, read_expr, read_expr),
-    0x0C: xparam('o5_gob200', read_expr, read_var_index, read_expr, read_expr),
-}
-
-gob6_ops = {
-    **gob5_ops,
-    0x00: xparam('o6_loadCursor'),
-    0x08: xparam('o6_assign'),
-    0x24: xparam('o6_createSprite', reads_uint16le, read_expr, read_expr),
-}
-
-gob7_ops = {
-    **gob6_ops,
-    0x0C: xparam('o7_setCursorToLoadFromExec'),
-    0x44: xparam('o7_displayWarning'),
-    0x44: xparam('o7_logString'),
-    0x54: xparam('o7_intToString', reads_uint16le, read_expr, read_expr),
-    0x58: xparam('o7_callFunction', reads_uint16le, read_expr, read_expr),
-    0x58: xparam('o7_loadFunctions', reads_uint16le, read_expr, read_expr),
-    0x60: xparam('o7_copyFile', reads_uint16le, read_expr, read_expr),
-    0x60: xparam('o7_moveFile', reads_uint16le, read_expr, read_expr),
-    0x88: xparam('o7_draw0x89', reads_uint16le, read_expr, read_expr),
-    0x88: xparam('o7_findFile', reads_uint16le, read_expr, read_expr),
-    0x88: xparam('o7_findCDFile', reads_uint16le, read_expr, read_expr),
-    0x8C: xparam('o7_getSystemProperty', reads_uint16le, read_expr, read_expr),
-    0x90: xparam('o7_loadImage', reads_uint16le, read_expr, read_expr),
-    0x90: xparam('o7_setVolume', reads_uint16le, read_expr, read_expr),
-    0x94: xparam('o7_zeroVar', reads_uint16le, read_expr, read_expr),
-    0xA0: xparam('o7_getINIValue', reads_uint16le, read_expr, read_expr),
-    0xA0: xparam('o7_setINIValue', reads_uint16le, read_expr, read_expr),
-    0xA4: xparam('o7_loadIFFPalette', reads_uint16le, read_expr, read_expr),
-    0xC4: xparam('o7_opendBase', reads_uint16le, read_expr, read_expr),
-    0xC4: xparam('o7_closedBase', reads_uint16le, read_expr, read_expr),
-    0xC4: xparam('o7_getDBString', reads_uint16le, read_expr, read_expr),
-    0x00: xparam('o7_loadCursor', reads_uint16le, read_expr, read_expr),
-    0x4C: xparam('o7_readData', reads_uint16le, read_expr, read_expr),
-    0x44: xparam('o7_oemToANSI', reads_uint16le, read_expr, read_expr),
-    0x44: xparam('o7_gob0x201', reads_uint16le, read_expr, read_expr),
-
-}
 
 named_variables = {
     'var8_4931': 'g_Language',
 }
 
 
-def opcode(scf, cmd, params):
+def opcode(scf, cmd):
     ctx['offset'] = scf.tell()
     func = ctx['optable'][cmd]
     # print(cmd, hex(cmd), func)
@@ -1368,23 +1284,15 @@ def menu():
 
 
 optables = {
-    'Gob1': gob1_ops, # Script_v1
-    'Gob2': gob2_ops, # Script_v2
-    'Gob3': gob3_ops, # Script_v3
-    'Ween': gob2_ops, # Script_v2
-    'Bargon': gobBargon_ops, # Script_Bargon
-    'Fascin': gobFascin_ops, # Script_Fascin
-    'Lost': gob3_ops, # Script_v3
-    'Woodruff': gob4_ops, # Script_v4
-    'Dynasty': gob5_ops, # Script_v5
-    'Urban': gob6_ops, # Script_v6
-    'Geisha': gobGeisha_ops, # Script_Geisha
-    'LittleRed': gobLittleRed_ops, # Script_LittleRed
-    'Adibou2': gob7_ops, # Script_v7
+    48: gobGeisha_ops, # Script_Geisha
+    49: gob1_ops, # Script_v1, Script_LittleRed, Script_Bargon, Script_Fascin
+    50: gob2_ops, # Script_v2
+    51: gob3_ops, # Script_v3, Script_v4, Script_v5
+    52: gob6_ops, # Script_v6, Script_v7
 }
 
 
-def main(gamedir, rebuild, scripts, lang=None, keys=False, exported=False, optable='Gob3'):
+def main(gamedir, rebuild, scripts, lang=None, keys=False, exported=False):
     game = archive.open_game(gamedir)
 
     decoders = defaultdict(lambda: CodePageEncoder('cp850'))
@@ -1405,7 +1313,7 @@ def main(gamedir, rebuild, scripts, lang=None, keys=False, exported=False, optab
     ctx['com_data'] = com_data
     ctx['com_entry'] = com_entry
 
-    ctx['optable'] = optables[optable]
+    # ctx['optable'] = optables[optable]
 
     script_dir = Path('scripts')
     os.makedirs(script_dir, exist_ok=True)
@@ -1435,7 +1343,13 @@ def main(gamedir, rebuild, scripts, lang=None, keys=False, exported=False, optab
         )
 
         # TODO: could it be used to automatically detect optable
+        prever = ctx.get('ver_script')
+        if prever is not None and prever != tot_file[41]:
+            print('warning: script version mismatch', prever, tot_file[41])
         ctx['ver_script'] = tot_file[41]
+        print('script version', ctx['ver_script'], tot_file[0x3d])
+
+        ctx['optable'] = optables[ctx['ver_script']]
 
         ctx['lang'] = lang
 
