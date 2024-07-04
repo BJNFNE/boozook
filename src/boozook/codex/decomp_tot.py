@@ -1092,7 +1092,7 @@ gob1_ops = {
     0x36: xparam('o1_invalidate'),
     0x37: fparam('o1_setBackDelta', read_expr, read_expr),
     0x38: fparam('o1_playSound', read_expr, read_expr, read_expr),
-    0x39: xparam('o1_stopSound'),
+    0x39: xparam('o1_stopSound', read_expr),
     0x3A: xparam('o1_loadSound'),
     0x3B: fparam('o1_freeSoundSlot', read_expr),
     0x3C: fparam('o1_waitEndPlay'),
