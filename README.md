@@ -18,7 +18,9 @@ Tools for extracting and editing Coktel Vision game resources.
 * Adibou 3 (DEV7)
 * Adibou presente series (DEV7)
 * Adiboud'chou series (DEV7)
-* Asterix Operation Getafix  
+* Asterix Operation Getafix
+* Bargon Attack
+* Galactic Empire
 * Geisha
 * Goblins 1
 * Gobliins 2
@@ -27,6 +29,9 @@ Tools for extracting and editing Coktel Vision game resources.
 * Croustibat
 * Fascination
 * Paris Paker 1990
+* Playtoons series
+* Ween: The Prophecy
+* Once Upon series
 
 ## Installation
 [IMPORTANT] check if Python 3 is already installed on your System.
