@@ -19,6 +19,7 @@ Tools for extracting and editing Coktel Vision game resources.
 * Adibou presente series (DEV7)
 * Adiboud'chou series (DEV7)
 * Asterix Operation Getafix
+* A.G.E
 * Bargon Attack
 * E.S.S. Mega
 * Inca
