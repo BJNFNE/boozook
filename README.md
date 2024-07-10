@@ -32,6 +32,7 @@ Tools for extracting and editing Coktel Vision game resources.
 * Playtoons series
 * Ween: The Prophecy
 * Once Upon series
+* Urban Runner
 
 ## Installation
 [IMPORTANT] check if Python 3 is already installed on your System.
