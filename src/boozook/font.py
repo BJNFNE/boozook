@@ -7,6 +7,7 @@ from boozook.codex import let
 
 FONT_PATTERNS = {
     '*.LET': ('fonts', let.decode_font, let.compose),
+    '*.FNT': ('fonts', let.decode_font, let.compose),
 }
 
 
