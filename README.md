@@ -11,6 +11,8 @@ Tools for extracting and editing Coktel Vision game resources.
 * Better support to recompile Game scripts.
 
 # Suported games by boozook
+* Adi 1
+* Adi 2
 * Adi 4 (DEV6)
 * Adi 5 (DEV7)
 * Adibou 1
