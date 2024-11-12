@@ -105,3 +105,13 @@ venv.bak/
 
 out/
 games/
+
+# Boozook related stuff
+extracted/
+fonts/
+graphics/
+scripts/
+*.ITK
+*.STK
+*.LTK
+*.JTK
