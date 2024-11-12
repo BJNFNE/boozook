@@ -27,7 +27,7 @@ def encode(game, patterns, fonts_dir):
 def menu():
     import argparse
 
-    parser = argparse.ArgumentParser(description='extract pak archive')
+    parser = argparse.ArgumentParser(description='extract fonts from archive')
     parser.add_argument('directory', help='game directory to work on')
     parser.add_argument(
         '--rebuild',
