@@ -1246,7 +1246,7 @@ gob1_ops = { # version 49 - Gob1, Bargon, Fascination, LittleRed
     0x3F: fparam('o1_checkData', read_expr, read_var_index),
     0x41: xparam('o1_cleanupStr'),
     0x42: fparam('o1_insertStr', read_var_index, read_expr),
-    0x43: xparam('o1_cutStr'),
+    0x43: xparam('o1_cutStr', read_var_index, read_expr, read_expr),
     0x44: xparam('o1_strstr', read_var_index, read_expr, read_var_index),
     0x45: fparam('o1_istrlen', read_var_index, read_var_index),
     0x46: fparam('o1_setMousePos', read_expr, read_expr),
