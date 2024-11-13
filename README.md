@@ -43,6 +43,7 @@ Tools for extracting and editing Coktel Vision game resources.
 - Asterix Operation Getafix
 - A.G.E
 - Bargon Attack
+- English Fever (DEV7)
 - E.S.S. Mega
 - Inca
 - Inca 2
@@ -60,6 +61,7 @@ Tools for extracting and editing Coktel Vision game resources.
 - Ween: The Prophecy
 - Once Upon series
 - Urban Runner (DEV6)
+- Nathan Vacances series (DEV7)
 
 ## Installation
 
