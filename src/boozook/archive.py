@@ -173,7 +173,7 @@ def rebuild_archive(game, extract_dir, patterns=ARCHIVE_PATTERNS):
 def menu():
     import argparse
 
-    parser = argparse.ArgumentParser(description='extract pak archive')
+    parser = argparse.ArgumentParser(description='extract stk archive')
     parser.add_argument('directory', help='game directory with files to extract')
     parser.add_argument(
         'patterns',
