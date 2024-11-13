@@ -56,7 +56,7 @@ Tools for extracting and editing Coktel Vision game resources.
 - Fascination
 - Paris Paker 1990
 - Playtoons series (DEV6)
-- Le pays des pierres Magiques
+- Le pays des pierres Magiques (DEV7)
 - Ween: The Prophecy
 - Once Upon series
 - Urban Runner (DEV6)
