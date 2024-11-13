@@ -26,7 +26,7 @@ def encode(game, patterns, target):
 def menu():
     import argparse
 
-    parser = argparse.ArgumentParser(description='extract pak archive')
+    parser = argparse.ArgumentParser(description='extract graphics from archive')
     parser.add_argument('directory', help='game directory to work on')
     parser.add_argument(
         '--rebuild',
