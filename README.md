@@ -55,11 +55,11 @@ Tools for extracting and editing Coktel Vision game resources.
 - Croustibat
 - Fascination
 - Paris Paker 1990
-- Playtoons series
+- Playtoons series (DEV6)
 - Le pays des pierres Magiques
 - Ween: The Prophecy
 - Once Upon series
-- Urban Runner
+- Urban Runner (DEV6)
 
 ## Installation
 
