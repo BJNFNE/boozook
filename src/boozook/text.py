@@ -91,7 +91,7 @@ def encode(
 def menu():
     import argparse
 
-    parser = argparse.ArgumentParser(description='extract pak archive')
+    parser = argparse.ArgumentParser(description='extract text from archive')
     parser.add_argument('directory', help='game directory to work on')
     parser.add_argument(
         '--rebuild',
