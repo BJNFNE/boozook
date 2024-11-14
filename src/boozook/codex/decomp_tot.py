@@ -1302,7 +1302,7 @@ gob3_ops = {  # version 51 - Gob3, Adibou1, Inca2, Woodruff, Dynasty
 }
 
 
-gob6_ops = {  # version 52 - Playtoons, Adibou2, Urban
+gob6_ops = {  # version 52 - Playtoons, Adi4, Adibou2, Urban
     **gob3_ops,
     0x03: xparam('o6_loadCursor'),
     # 0x03: xparam('o7_loadCursor'),
