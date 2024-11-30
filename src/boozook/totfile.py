@@ -31,15 +31,15 @@ def read_tot(stream):
     text_offset = fix_value(read_uint32le(header[48:]), 0xFFFFFFFF, 0)
     resources_offset = fix_value(read_uint32le(header[52:]), 0xFFFFFFFF, 0)
     _anim_data_size = read_uint32le(header[56:])
-    _im_file_number, _ex_file_number, _commun_handling = [int(x) for x in header[59:62]]
+    im_file_number, ex_file_number, _commun_handling = [int(x) for x in header[59:62]]
 
     # print(
     #   _variables_count,
     #   text_offset,
     #   resources_offset,
     #   _anim_data_size,
-    #   _im_file_number,
-    #   _ex_file_number,
+    #   im_file_number,
+    #   ex_file_number,
     #   _commun_handling
     # )
 
@@ -79,7 +79,7 @@ def read_tot(stream):
         assert stream.read() == b''
 
     # print(texts, resources)
-    return script, functions, texts, resources
+    return script, functions, texts, resources, im_file_number, ex_file_number
 
 
 def parse_text_data(data: bytes) -> Iterator[tuple[int, int, bytes]]:

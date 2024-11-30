@@ -1457,7 +1457,7 @@ def main(gamedir, rebuild, scripts, lang=None, keys=False, exported=False):
             tot_data = tot_file.read()
         
         with io.BytesIO(tot_data) as tot_stream:
-            script, functions, texts_data, res_data = read_tot(tot_stream)
+            script, functions, texts_data, res_data, ifn, efn = read_tot(tot_stream)
 
         tot_file = entry.read_bytes()
 

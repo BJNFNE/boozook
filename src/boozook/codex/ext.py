@@ -83,6 +83,9 @@ def uncompress_sprite(data, width, height):
     with io.BytesIO(data) as stream:
         codec = stream.read(1)[0]
         if codec != 1:
+            if codec == 2:
+                assert len(data[1:]) == width * height, (len(data[1:]), width, height)
+                return list(data[1:])
             raise NotImplementedError(codec)
 
         uncompressed_size = reads_uint32le(stream)
@@ -193,7 +196,7 @@ def parse(game: GameBase, entry: ArchivePath, target: str | Path):
     target = Path(target)
     reses = {}
     with entry.open('rb') as f:
-        _, _, _, res_data = read_tot(f)
+        _, _, _, res_data, ifn, efn = read_tot(f)
     if res_data:
         reses['TOT'] = res_data
 
@@ -205,6 +208,10 @@ def parse(game: GameBase, entry: ArchivePath, target: str | Path):
     for com_pattern, com_entry in game.search(['COMMUN.EX*']):
         com_data[com_entry.name] = com_entry.read_bytes()
 
+    im_data = {}
+    for im_patten, im_entry in game.search(['COMMUN.IM*']):
+        im_data[im_entry.name] = im_entry.read_bytes()
+
     bim = None
     palette = list(PALETTE)
     for ext, res_data in reses.items():
@@ -215,17 +222,31 @@ def parse(game: GameBase, entry: ArchivePath, target: str | Path):
                 if offset < 0:
                     print('NEGATIVE OFFSET')
                     if ext == 'TOT':
-                        raise ValueError('IM resource not implemented')
-                    # TODO: handle different COMMUN.EX file for different TOTs
-                    with io.BytesIO(com_data[com_entry.name]) as stream:
+                        print('IM RESOURCE')
+                        if ifn == 0:
+                            ifn = 1
+                        assert size > 0, size
+                        com_im = im_data[f'COMMUN.IM{ifn}']
                         assert ~offset == -(offset + 1)
-                        stream.seek(~offset)
-                        if packed:
-                            uncompressed_size = reads_uint32le(stream)
-                            data = unpack_chunk(stream, uncompressed_size)
-                        else:
-                            data = stream.read(size)
+                        xoffset = int.from_bytes(com_im[~offset * 4:~offset * 4 + 4], 'little')
+                        data = com_im[xoffset:xoffset+size]
+                    else:
+                        print('EX RESOURCE')
+                        com_im = com_data[f'COMMUN.EX{efn}']
+                        with io.BytesIO(com_im) as stream:
+                            assert ~offset == -(offset + 1)
+                            stream.seek(~offset)
+                            assert size > 0, size
+                            if packed:
+                                uncompressed_size = reads_uint32le(stream)
+                                data = unpack_chunk(stream, uncompressed_size)
+                            else:
+                                data = stream.read(size)
+                                if len(data) != size:
+                                    print('WARNING: Reading EX out of bounds')
+                                    continue
                 else:
+                    print('INLINE', ext, 'RESOURCE')
                     assert f.tell() == offset + table_off, (
                         f.tell(),
                         offset + table_off,
@@ -237,6 +258,7 @@ def parse(game: GameBase, entry: ArchivePath, target: str | Path):
                         data = unpack_chunk(f, uncompressed_size)
                     else:
                         data = f.read(size)
+                print('COMPRESSION', *data[:3])
                 if data[:2] == b'\x01\x02':
                     print('UNCOMPRESS', entry.name, idx)
                     im = uncompress_sprite(data[2:], width, height)
@@ -285,7 +307,7 @@ def compose(game: GameBase, entry: ArchivePath, target: str | Path):
     target = Path(target)
     reses = {}
     with entry.open('rb') as f:
-        _, _, _, res_data = read_tot(f)
+        _, _, _, res_data, ifn, efn = read_tot(f)
         if res_data:
             reses['TOT'] = res_data
 

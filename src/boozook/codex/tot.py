@@ -87,7 +87,7 @@ def get_original_texts(
 ) -> dict[str, dict[int, tuple[int, int, bytes]]]:
     sources = {}
     with entry.open('rb') as stream:
-        _, _, texts_data, res_data = read_tot(stream)
+        _, _, texts_data, res_data, _, _ = read_tot(stream)
     if texts_data:
         sources['INT'] = texts_data
     lang_patterns = [f'{entry.stem}.{ext.name}' for ext in Language]
