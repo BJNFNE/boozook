@@ -115,3 +115,7 @@ scripts/
 *.STK
 *.LTK
 *.JTK
+*.itk
+*.stk
+*.ltk
+*.jtk
