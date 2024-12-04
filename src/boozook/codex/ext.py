@@ -53,9 +53,16 @@ def pack_sprite(data):
 
 def unpack_sprite(data, width, height):
     out = bytearray()
+    complete = True
     with io.BytesIO(data) as stream:
         while len(out) < width * height:
-            val = stream.read(1)[0]
+            n = stream.read(1)
+            if not n:
+                complete = False
+                print(f'WARNING: incomplete sprite - {len(out)} of {width * height}')
+                out += b'\0' * (width * height - len(out))
+                break
+            val = n[0]
             repeat = val & 7
             val &= 0xF8
 
@@ -73,7 +80,7 @@ def unpack_sprite(data, width, height):
             # print('DEC', val, len(out), repeat)
         assert len(out) == width * height, (len(out), width, height)
         res = list(out)
-        if res:
+        if res and complete:
             enc = pack_sprite(res)
             assert enc == data, (enc, data)
         return res
