@@ -97,7 +97,7 @@ def menu():
         '--rebuild',
         '-r',
         action='store_true',
-        help='create modifed game resource with the changes',
+        help='create modified game resource with the changes',
     )
     parser.add_argument(
         '--allowed',
