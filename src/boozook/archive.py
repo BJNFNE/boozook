@@ -185,7 +185,7 @@ def menu():
         '--rebuild',
         '-r',
         action='store_true',
-        help='create modifed game resource with the changes',
+        help='create modified game resource with the changes',
     )
     return parser.parse_args()
 
